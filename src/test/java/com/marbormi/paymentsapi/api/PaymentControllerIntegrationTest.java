@@ -157,4 +157,39 @@ public class PaymentControllerIntegrationTest {
                 )
         );
     }
+
+    @DisplayName("Create Payment with empty/null payer email")
+    @Test
+    void createPaymentWithInvalidEmail() throws Exception {
+        createPaymentWithInvalidContent("{\"payerEmail\": null, \"currency\": \"USD\", \"amount\": 10.55}");
+        createPaymentWithInvalidContent("{\"payerEmail\": \"\", \"currency\": \"USD\", \"amount\": 10.55}");
+        createPaymentWithInvalidContent("{\"payerEmail\": \"invalid_email\", \"currency\": \"USD\", \"amount\": 10.55}");
+        createPaymentWithInvalidContent("{\"currency\": \"USD\", \"amount\": 10.55}");
+    }
+
+    @DisplayName("Create Payment with empty/null currency")
+    @Test
+    void createPaymentWithEmptyOrNullCurrency() throws Exception {
+        createPaymentWithInvalidContent("{\"payerEmail\": \"payer@email.com\", \"currency\": null, \"amount\": 10.55}");
+        createPaymentWithInvalidContent("{\"payerEmail\": \"payer@email.com\", \"currency\": \"\", \"amount\": 10.55}");
+        createPaymentWithInvalidContent("{\"payerEmail\": \"payer@email.com\", \"amount\": 10.55}");
+    }
+
+    @DisplayName("Create Payment with invalid amount")
+    @Test
+    void createPaymentWithInvalidAmount() throws Exception {
+        createPaymentWithInvalidContent("{\"payerEmail\": \"payer@email.com\", \"currency\": \"USD\", \"amount\": 0}");
+        createPaymentWithInvalidContent("{\"payerEmail\": \"payer@email.com\", \"currency\": \"USD\"}");
+        createPaymentWithInvalidContent("{\"payerEmail\": \"payer@email.com\", \"currency\": \"USD\", \"amount\": -1.0}");
+    }
+
+    private void createPaymentWithInvalidContent(String content) throws Exception {
+        mockMvc.perform(
+                        post(basePaymentPath)
+                                .content(content)
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+
+                )
+                .andExpect(status().isBadRequest());
+    }
 }
