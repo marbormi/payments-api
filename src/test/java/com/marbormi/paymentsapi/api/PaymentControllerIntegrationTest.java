@@ -1,10 +1,12 @@
 package com.marbormi.paymentsapi.api;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marbormi.paymentsapi.domain.CurrencyCode;
 import com.marbormi.paymentsapi.domain.PaymentStatus;
+import com.marbormi.paymentsapi.dtos.PaymentCreationDTO;
 import com.marbormi.paymentsapi.dtos.PaymentDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,11 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("Payment Controller Integration Test")
@@ -114,5 +119,42 @@ public class PaymentControllerIntegrationTest {
                         get(nonExistentPaymentPath).accept(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isNotFound());
+    }
+
+    @DisplayName("Create Payment")
+    @Test
+    void createPayment() throws Exception {
+        final String responseDto = mockMvc.perform(
+                        post(basePaymentPath)
+                                .content(getCreateDto())
+                                .contentType(MediaType.APPLICATION_JSON_VALUE)
+
+                )
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        final LocalDateTime requestedAt = LocalDateTime.now();
+
+        final PaymentDTO paymentDto = objectMapper.readValue(responseDto, PaymentDTO.class);
+        assertThat(paymentDto).isNotNull();
+        assertThat(paymentDto.id()).isNotNull();
+        assertThat(paymentDto.createdDate()).isNotNull()
+                .isCloseTo(requestedAt,within(1, ChronoUnit.SECONDS));
+        assertThat(paymentDto.payerEmail()).isEqualTo(email);
+        assertThat(paymentDto.status()).isEqualTo(PaymentStatus.UNPAID);
+        assertThat(paymentDto.currency()).isEqualTo(currency);
+        assertThat(paymentDto.amount()).isEqualTo(amount);
+        assertThat(paymentDto.paidDate()).isNull();
+    }
+
+    public String getCreateDto() throws JsonProcessingException {
+        return objectMapper.writeValueAsString(
+                new PaymentCreationDTO(
+                        email,
+                        currency,
+                        amount
+                )
+        );
     }
 }
