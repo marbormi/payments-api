@@ -28,8 +28,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DisplayName("Payment Controller Integration Test")
@@ -50,6 +49,7 @@ public class PaymentControllerIntegrationTest {
     private final CurrencyCode currency = CurrencyCode.USD;
     private final BigDecimal amount = new BigDecimal("20.1");
 
+    final UUID unpaidPaymentId = UUID.fromString("c5003832-7c62-4745-ac01-82bcf69215db");
     private final String basePaymentPath = "/payments/";
 
     @DisplayName("Get All Payments")
@@ -86,7 +86,6 @@ public class PaymentControllerIntegrationTest {
     @DisplayName("Get Existent Payment")
     @Test
     void getPayment() throws Exception {
-        final UUID unpaidPaymentId = UUID.fromString("c5003832-7c62-4745-ac01-82bcf69215db");
         final String existentPaymentPath = String.format("/payments/%s", unpaidPaymentId);
         final String responseDto = mockMvc.perform(
                         get(existentPaymentPath).accept(MediaType.APPLICATION_JSON)
@@ -191,5 +190,44 @@ public class PaymentControllerIntegrationTest {
 
                 )
                 .andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("Mark Payment as paid")
+    @Test
+    void markPaymentAsPaid() throws Exception {
+        final String updatePaymentPath = String.format("/payments/%s/paid", unpaidPaymentId);
+        final String responseDto = mockMvc.perform(
+                        patch(updatePaymentPath)
+                )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        final LocalDateTime requestedAt = LocalDateTime.now();
+
+        final PaymentDTO paymentDto = objectMapper.readValue(responseDto, PaymentDTO.class);
+        assertThat(paymentDto.status()).isEqualTo(PaymentStatus.PAID);
+        assertThat(paymentDto.paidDate()).isNotNull()
+                .isCloseTo(requestedAt, within(1, ChronoUnit.SECONDS));
+    }
+
+    @DisplayName("Mark Payment already paid, as paid")
+    @Test
+    void markPaymentAsPaidAgain() throws Exception {
+        final UUID paidPaymentId = UUID.fromString("e8fca603-9361-40a9-a1db-ac0b4b2d2b02");
+        final String updatePaymentPath = String.format("/payments/%s/paid", paidPaymentId);
+        final String responseDto = mockMvc.perform(
+                        patch(updatePaymentPath)
+                )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        final LocalDateTime paidAt = LocalDateTime.parse("2023-01-01T01:00:05");
+
+        final PaymentDTO paymentDto = objectMapper.readValue(responseDto, PaymentDTO.class);
+        assertThat(paymentDto.status()).isEqualTo(PaymentStatus.PAID);
+        assertThat(paymentDto.paidDate()).isNotNull()
+                .isEqualTo(paidAt);
     }
 }
