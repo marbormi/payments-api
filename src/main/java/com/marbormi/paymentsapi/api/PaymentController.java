@@ -50,4 +50,12 @@ public class PaymentController {
                 paymentService.markAsPaid(id)
         );
     }
+
+    @DeleteMapping("{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePaymentIfUnpaid(@PathVariable UUID id){
+        if(!paymentService.deleteIfUnpaid(id)){
+            throw new PaymentAlreadyPaid(id);
+        }
+    }
 }

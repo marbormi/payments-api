@@ -155,4 +155,24 @@ class PaymentControllerTest {
         assertThat(paymentDTO.status()).isEqualTo(PaymentStatus.PAID);
         assertThat(paymentDTO.paidDate()).isEqualTo(paidAt);
     }
+
+    @DisplayName("Delete unpaid payment")
+    @Test
+    void deleteUnpaidPayment(){
+        when(paymentService.deleteIfUnpaid(id)).thenReturn(true);
+
+        paymentController.deletePaymentIfUnpaid(id);
+
+        verify(paymentService, times(1)).deleteIfUnpaid(id);
+    }
+
+    @DisplayName("Try to delete paid payment")
+    @Test
+    void deletePaidPayment(){
+        when(paymentService.deleteIfUnpaid(id)).thenReturn(false);
+
+        final Throwable thrown = catchThrowable(() -> paymentController.deletePaymentIfUnpaid(id));
+
+        assertThat(thrown).isInstanceOf(PaymentAlreadyPaid.class);
+    }
 }
