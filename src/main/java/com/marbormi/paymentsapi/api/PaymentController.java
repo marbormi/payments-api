@@ -28,4 +28,9 @@ public class PaymentController {
     public Page<PaymentDTO> getAllPayments(@PageableDefault(size = 20) final Pageable pageable){
         return paymentService.findAll(pageable).map(paymentMapper::toPaymentDto);
     }
+
+    @GetMapping("{id}")
+    public PaymentDTO getPayment(@PathVariable UUID id){
+        return paymentMapper.toPaymentDto(paymentService.findById(id));
+    }
 }

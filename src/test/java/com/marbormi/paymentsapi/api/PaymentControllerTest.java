@@ -80,4 +80,35 @@ class PaymentControllerTest {
                 payment.getPaidDate()
         );
     }
+
+    @DisplayName("Get Existent Payment")
+    @Test
+    void getPayment() {
+        final LocalDateTime createdDate = LocalDateTime.of(2023, 1, 30, 10, 1);
+        final Payment payment = new Payment(
+                id,
+                createdDate,
+                email,
+                PaymentStatus.UNPAID,
+                currency,
+                amount,
+                null
+        );
+        final var paymentDto = getPaymentDto(payment);
+
+        when(paymentService.findById(id)).thenReturn(payment);
+        when(paymentMapper.toPaymentDto(payment)).thenReturn(paymentDto);
+
+        assertThat(paymentController.getPayment(id)).isEqualTo(paymentDto);
+    }
+
+    @DisplayName("Get Non-Existent Payment")
+    @Test
+    public void getNonExistentPayment() {
+        when(paymentService.findById(id)).thenThrow(new PaymentNotFound(id));
+
+        final Throwable thrown = catchThrowable(() -> paymentController.getPayment(id));
+
+        assertThat(thrown).isInstanceOf(PaymentNotFound.class);
+    }
 }
