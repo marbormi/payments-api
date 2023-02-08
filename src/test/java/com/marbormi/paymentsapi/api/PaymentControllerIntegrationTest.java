@@ -49,7 +49,8 @@ public class PaymentControllerIntegrationTest {
     private final CurrencyCode currency = CurrencyCode.USD;
     private final BigDecimal amount = new BigDecimal("20.1");
 
-    final UUID unpaidPaymentId = UUID.fromString("c5003832-7c62-4745-ac01-82bcf69215db");
+    private final UUID unpaidPaymentId = UUID.fromString("c5003832-7c62-4745-ac01-82bcf69215db");
+    private final UUID paidPaymentId = UUID.fromString("e8fca603-9361-40a9-a1db-ac0b4b2d2b02");
     private final String basePaymentPath = "/payments/";
 
     @DisplayName("Get All Payments")
@@ -214,7 +215,6 @@ public class PaymentControllerIntegrationTest {
     @DisplayName("Mark Payment already paid, as paid")
     @Test
     void markPaymentAsPaidAgain() throws Exception {
-        final UUID paidPaymentId = UUID.fromString("e8fca603-9361-40a9-a1db-ac0b4b2d2b02");
         final String updatePaymentPath = String.format("/payments/%s/paid", paidPaymentId);
         final String responseDto = mockMvc.perform(
                         patch(updatePaymentPath)
@@ -229,5 +229,25 @@ public class PaymentControllerIntegrationTest {
         assertThat(paymentDto.status()).isEqualTo(PaymentStatus.PAID);
         assertThat(paymentDto.paidDate()).isNotNull()
                 .isEqualTo(paidAt);
+    }
+
+    @DisplayName("Delete unpaid payment")
+    @Test
+    void deletePaymentIfUnpaid() throws Exception {
+        final String deletePaymentPath = String.format("/payments/%s", unpaidPaymentId);
+        mockMvc.perform(
+                        delete(deletePaymentPath)
+                )
+                .andExpect(status().isNoContent());
+    }
+
+    @DisplayName("Try to delete paid payment")
+    @Test
+    void deletePaymentPaid() throws Exception {
+        final String deletePaymentPath = String.format("/payments/%s", paidPaymentId);
+        mockMvc.perform(
+                        delete(deletePaymentPath)
+                )
+                .andExpect(status().isForbidden());
     }
 }
