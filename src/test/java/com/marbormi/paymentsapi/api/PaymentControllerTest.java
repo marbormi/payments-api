@@ -136,4 +136,23 @@ class PaymentControllerTest {
 
         assertThat(paymentController.createPayment(paymentCreationDto)).isEqualTo(expectedPaymentDto);
     }
+
+    @DisplayName("Mark as paid")
+    @Test
+    void markPaymentAsPaid() {
+        final LocalDateTime paidAt = LocalDateTime.parse("2023-01-01T01:00:05");
+        final Payment payment = Payment.builder()
+                .id(id)
+                .status(PaymentStatus.PAID)
+                .paidDate(paidAt)
+                .build();
+
+        when(paymentService.markAsPaid(id)).thenReturn(payment);
+        when(paymentMapper.toPaymentDto(payment)).thenReturn(getPaymentDto(payment));
+
+        final PaymentDTO paymentDTO = paymentController.markPaymentAsPaid(id);
+
+        assertThat(paymentDTO.status()).isEqualTo(PaymentStatus.PAID);
+        assertThat(paymentDTO.paidDate()).isEqualTo(paidAt);
+    }
 }

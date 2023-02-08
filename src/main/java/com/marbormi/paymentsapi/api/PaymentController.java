@@ -43,4 +43,11 @@ public class PaymentController {
                 )
         );
     }
+
+    @PatchMapping("{id}/paid")
+    public PaymentDTO markPaymentAsPaid(@PathVariable UUID id){
+        return paymentMapper.toPaymentDto(
+                paymentService.markAsPaid(id)
+        );
+    }
 }
