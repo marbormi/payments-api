@@ -77,4 +77,42 @@ public class PaymentControllerIntegrationTest {
         assertThat(paymentDTOS.getTotalPages()).isEqualTo(2);
         assertThat(paymentDTOS.getContent()).containsExactlyElementsOf(expectedPaymentDTOs);
     }
+
+    @DisplayName("Get Existent Payment")
+    @Test
+    void getPayment() throws Exception {
+        final UUID unpaidPaymentId = UUID.fromString("c5003832-7c62-4745-ac01-82bcf69215db");
+        final String existentPaymentPath = String.format("/payments/%s", unpaidPaymentId);
+        final String responseDto = mockMvc.perform(
+                        get(existentPaymentPath).accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        final PaymentDTO expectedPaymentDto = new PaymentDTO(
+                unpaidPaymentId,
+                LocalDateTime.parse("2023-01-30T11:00:05"),
+                email,
+                PaymentStatus.UNPAID,
+                currency,
+                amount,
+                null
+        );
+
+        final PaymentDTO paymentDto = objectMapper.readValue(responseDto, PaymentDTO.class);
+
+        assertThat(paymentDto).isEqualTo(expectedPaymentDto);
+    }
+
+    @DisplayName("Get Non-Existent Payment")
+    @Test
+    void getNonExistentPayment() throws Exception {
+        final String nonExistentPaymentPath = "/payments/f65507f5-1182-4e68-b448-3c7f3c32f1f6";
+        mockMvc.perform(
+                        get(nonExistentPaymentPath).accept(MediaType.APPLICATION_JSON)
+                )
+                .andExpect(status().isNotFound());
+    }
 }
