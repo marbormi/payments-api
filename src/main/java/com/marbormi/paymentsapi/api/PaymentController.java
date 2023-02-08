@@ -33,4 +33,14 @@ public class PaymentController {
     public PaymentDTO getPayment(@PathVariable UUID id){
         return paymentMapper.toPaymentDto(paymentService.findById(id));
     }
+
+    @PostMapping()
+    @ResponseStatus(HttpStatus.CREATED)
+    public PaymentDTO createPayment(@Valid @RequestBody PaymentCreationDTO paymentCreationDTO) {
+        return paymentMapper.toPaymentDto(
+                paymentService.save(
+                        paymentMapper.toPayment(paymentCreationDTO)
+                )
+        );
+    }
 }

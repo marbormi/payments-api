@@ -111,4 +111,29 @@ class PaymentControllerTest {
 
         assertThat(thrown).isInstanceOf(PaymentNotFound.class);
     }
+
+    @DisplayName("Create Payment")
+    @Test
+    void createPayment() {
+        final Payment payment = Payment.builder()
+                .id(id)
+                .payerEmail(email)
+                .currency(currency)
+                .amount(amount)
+                .status(PaymentStatus.UNPAID)
+                .paidDate(null)
+                .build();
+        final PaymentCreationDTO paymentCreationDto = new PaymentCreationDTO(
+                email,
+                currency,
+                amount
+        );
+        final PaymentDTO expectedPaymentDto = getPaymentDto(payment);
+
+        when(paymentMapper.toPayment(paymentCreationDto)).thenReturn(payment);
+        when(paymentService.save(payment)).thenReturn(payment);
+        when(paymentMapper.toPaymentDto(payment)).thenReturn(expectedPaymentDto);
+
+        assertThat(paymentController.createPayment(paymentCreationDto)).isEqualTo(expectedPaymentDto);
+    }
 }
