@@ -1,23 +1,23 @@
 package com.marbormi.paymentsapi.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
 @Table(name = "payment")
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@ToString
 @EntityListeners(AuditingEntityListener.class)
 @Builder
 public class Payment {
@@ -43,4 +43,29 @@ public class Payment {
 
     private LocalDateTime paidDate;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Payment payment)) return false;
+
+        if (!Objects.equals(id, payment.id)) return false;
+        if (!Objects.equals(createdDate, payment.createdDate)) return false;
+        if (!Objects.equals(payerEmail, payment.payerEmail)) return false;
+        if (status != payment.status) return false;
+        if (currency != payment.currency) return false;
+        if (!Objects.equals(amount, payment.amount)) return false;
+        return Objects.equals(paidDate, payment.paidDate);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (createdDate != null ? createdDate.hashCode() : 0);
+        result = 31 * result + (payerEmail != null ? payerEmail.hashCode() : 0);
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (currency != null ? currency.hashCode() : 0);
+        result = 31 * result + (amount != null ? amount.hashCode() : 0);
+        result = 31 * result + (paidDate != null ? paidDate.hashCode() : 0);
+        return result;
+    }
 }
